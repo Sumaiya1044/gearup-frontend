@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 
@@ -38,6 +39,10 @@ export default function GearPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  const [search, setSearch] = useState("");
+  const [maxPrice, setMaxPrice] = useState("");
+  const [availability, setAvailability] = useState("all");
+
   useEffect(() => {
     const fetchGears = async () => {
       try {
@@ -55,6 +60,33 @@ export default function GearPage() {
 
     fetchGears();
   }, []);
+
+  const filteredGears = useMemo(() => {
+  return gears.filter((gear, index) => {
+    const displayName = displayNames[index] || gear.name;
+    const searchText = search.toLowerCase().trim();
+
+    const matchesSearch =
+      !searchText ||
+      displayName.toLowerCase().includes(searchText);
+
+    const matchesPrice =
+      !maxPrice || gear.pricePerDay <= Number(maxPrice);
+
+    const matchesAvailability =
+      availability === "all" ||
+      (availability === "available" && gear.available !== false) ||
+      (availability === "unavailable" && gear.available === false);
+
+    return matchesSearch && matchesPrice && matchesAvailability;
+  });
+}, [gears, search, maxPrice, availability]);
+
+  const clearFilters = () => {
+    setSearch("");
+    setMaxPrice("");
+    setAvailability("all");
+  };
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -90,6 +122,88 @@ export default function GearPage() {
         </p>
       </section>
 
+      {!loading && !error && gears.length > 0 && (
+        <section className="mx-auto max-w-7xl px-6 pb-8">
+          <div className="rounded-2xl bg-white p-5 shadow-sm ring-1 ring-gray-100">
+            <div className="grid gap-4 md:grid-cols-3">
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Search Gears
+                </label>
+
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400">
+                    🔍
+                  </span>
+
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    placeholder="Search by name, description..."
+                    className="w-full rounded-xl border border-gray-300 py-3 pl-10 pr-4 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Maximum Price / Day
+                </label>
+
+                <input
+                  type="number"
+                  min="0"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(e.target.value)}
+                  placeholder="Example: 20"
+                  className="w-full rounded-xl border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Availability
+                </label>
+
+                <select
+                  value={availability}
+                  onChange={(e) => setAvailability(e.target.value)}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+                >
+                  <option value="all">All Gears</option>
+                  <option value="available">Available Only</option>
+                  <option value="unavailable">Unavailable Only</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mt-5 flex flex-col justify-between gap-3 border-t border-gray-100 pt-4 sm:flex-row sm:items-center">
+              <p className="text-sm text-gray-500">
+                Showing{" "}
+                <span className="font-bold text-gray-900">
+                  {filteredGears.length}
+                </span>{" "}
+                of{" "}
+                <span className="font-bold text-gray-900">
+                  {gears.length}
+                </span>{" "}
+                gears
+              </p>
+
+              {(search || maxPrice || availability !== "all") && (
+                <button
+                  onClick={clearFilters}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
+                >
+                  Clear Filters
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       {loading && (
         <section className="mx-auto max-w-7xl px-6 pb-20">
           <div className="rounded-2xl bg-white p-16 text-center shadow-sm">
@@ -112,23 +226,30 @@ export default function GearPage() {
         </section>
       )}
 
-      {!loading && !error && gears.length === 0 && (
+      {!loading && !error && filteredGears.length === 0 && (
         <section className="mx-auto max-w-7xl px-6 pb-20">
           <div className="rounded-2xl bg-white p-16 text-center shadow-sm">
-            <div className="text-5xl">🏋️</div>
+            <div className="text-5xl">🔎</div>
 
             <h2 className="mt-5 text-2xl font-bold text-gray-900">
-              No gears available
+              No gears found
             </h2>
 
             <p className="mt-2 text-gray-500">
-              There are no gears available for rent at the moment.
+              Try changing your search or filter options.
             </p>
+
+            <button
+              onClick={clearFilters}
+              className="mt-6 rounded-lg bg-gray-900 px-6 py-3 font-semibold text-white hover:bg-blue-600"
+            >
+              Clear Filters
+            </button>
           </div>
         </section>
       )}
 
-      {!loading && !error && gears.length > 0 && (
+      {!loading && !error && filteredGears.length > 0 && (
         <section className="mx-auto max-w-7xl px-6 pb-20">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-2xl font-bold text-gray-900">
@@ -136,81 +257,93 @@ export default function GearPage() {
             </h2>
 
             <p className="text-sm text-gray-500">
-              {gears.length} gear{gears.length !== 1 ? "s" : ""} found
+              {filteredGears.length} gear
+              {filteredGears.length !== 1 ? "s" : ""} found
             </p>
           </div>
 
           <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
-            {gears.map((gear, index) => (
-              <article
-                key={gear.id}
-                className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
-              >
-                <div className="relative h-64 overflow-hidden bg-gray-200">
-                  <img
-                    src={
-                      gear.image ||
-                      fallbackImages[index % fallbackImages.length]
-                    }
-                    alt={displayNames[index] || gear.name}
-                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
-                  />
+            {filteredGears.map((gear) => {
+              const originalIndex = gears.findIndex(
+                (item) => item.id === gear.id
+              );
 
-                  <div
-                    className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold shadow ${
-                      gear.available === false
-                        ? "bg-red-100 text-red-700"
-                        : "bg-green-100 text-green-700"
-                    }`}
-                  >
-                    {gear.available === false
-                      ? "Unavailable"
-                      : "Available"}
-                  </div>
-                </div>
+              const displayName =
+                displayNames[originalIndex] || gear.name;
 
-                <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900">
-                    {displayNames[index] || gear.name}
-                  </h3>
+              return (
+                <article
+                  key={gear.id}
+                  className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                >
+                  <div className="relative h-64 overflow-hidden bg-gray-200">
+                    <img
+                      src={
+                        gear.image ||
+                        fallbackImages[
+                          originalIndex % fallbackImages.length
+                        ]
+                      }
+                      alt={displayName}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
 
-                  {gear.description && (
-                    <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-600">
-                      {gear.description}
-                    </p>
-                  )}
-
-                  {gear.location && (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
-                      <span>📍</span>
-                      <span>{gear.location}</span>
-                    </div>
-                  )}
-
-                  <div className="mt-6 flex items-end justify-between border-t border-gray-100 pt-5">
-                    <div>
-                      <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
-                        Rental Price
-                      </p>
-
-                      <p className="mt-1 text-xl font-extrabold text-gray-900">
-                        ৳{gear.pricePerDay}
-                        <span className="ml-1 text-sm font-medium text-gray-500">
-                          /day
-                        </span>
-                      </p>
-                    </div>
-
-                    <Link
-                      href={`/gear/${gear.id}`}
-                      className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-600"
+                    <div
+                      className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold shadow ${
+                        gear.available === false
+                          ? "bg-red-100 text-red-700"
+                          : "bg-green-100 text-green-700"
+                      }`}
                     >
-                      View Details
-                    </Link>
+                      {gear.available === false
+                        ? "Unavailable"
+                        : "Available"}
+                    </div>
                   </div>
-                </div>
-              </article>
-            ))}
+
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold text-gray-900">
+                      {displayName}
+                    </h3>
+
+                    {gear.description && (
+                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-gray-600">
+                        {gear.description}
+                      </p>
+                    )}
+
+                    {gear.location && (
+                      <div className="mt-4 flex items-center gap-2 text-sm text-gray-500">
+                        <span>📍</span>
+                        <span>{gear.location}</span>
+                      </div>
+                    )}
+
+                    <div className="mt-6 flex items-end justify-between border-t border-gray-100 pt-5">
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-gray-400">
+                          Rental Price
+                        </p>
+
+                        <p className="mt-1 text-xl font-extrabold text-gray-900">
+                          ৳{gear.pricePerDay}
+                          <span className="ml-1 text-sm font-medium text-gray-500">
+                            /day
+                          </span>
+                        </p>
+                      </div>
+
+                      <Link
+                        href={`/gear/${gear.id}`}
+                        className="rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-bold text-white hover:bg-blue-600"
+                      >
+                        View Details
+                      </Link>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
       )}
