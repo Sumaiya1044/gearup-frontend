@@ -236,7 +236,7 @@ export default function GearDetailsPage() {
                 </button>
               ) : (
                 <button
-                  onClick={() => router.push(`/booking/${gear.id}`)}
+                  onClick={() => { const token = localStorage.getItem("token"); if (!token) { router.push("/login"); return; } router.push(`/booking/${gear.id}`); }}
                   className="rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white transition hover:bg-blue-700"
                 >
                   Book / Rent Now

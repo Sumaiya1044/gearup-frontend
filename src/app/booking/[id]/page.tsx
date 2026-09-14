@@ -64,6 +64,7 @@ export default function BookingPage() {
   };
 
   const days = calculateDays();
+
   const totalPrice =
     gear && days > 0
       ? gear.pricePerDay * days
@@ -72,6 +73,14 @@ export default function BookingPage() {
   const handleBooking = async () => {
     setError("");
     setSuccess("");
+
+    // Login check
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      router.push("/login");
+      return;
+    }
 
     if (!startDate || !endDate) {
       setError("Please select both start and end dates.");
@@ -109,16 +118,22 @@ export default function BookingPage() {
 
       if (!rentalOrderId) {
         console.error("Rental ID not found:", response.data);
+
         setError(
           "Rental was created, but the rental order ID was not received."
         );
+
         return;
       }
 
-      setSuccess("Rental created successfully! Redirecting to payment...");
+      setSuccess(
+        "Rental created successfully! Redirecting to payment..."
+      );
 
       setTimeout(() => {
-        router.push(`/payment?rentalOrderId=${rentalOrderId}`);
+        router.push(
+          `/payment?rentalOrderId=${rentalOrderId}`
+        );
       }, 800);
     } catch (err: any) {
       console.error("RENTAL ERROR:", err);
@@ -137,6 +152,7 @@ export default function BookingPage() {
       <main className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="rounded-2xl bg-white p-10 text-center shadow-sm">
           <div className="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-gray-200 border-t-blue-600" />
+
           <p className="mt-4 font-medium text-gray-600">
             Loading booking page...
           </p>
@@ -225,6 +241,7 @@ export default function BookingPage() {
 
               <p className="mt-1 text-3xl font-extrabold text-gray-900">
                 ৳{gear.pricePerDay}
+
                 <span className="ml-2 text-base font-medium text-gray-500">
                   /day
                 </span>
@@ -278,7 +295,9 @@ export default function BookingPage() {
                   type="date"
                   value={startDate}
                   min={new Date().toISOString().split("T")[0]}
-                  onChange={(e) => setStartDate(e.target.value)}
+                  onChange={(e) =>
+                    setStartDate(e.target.value)
+                  }
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
@@ -295,7 +314,9 @@ export default function BookingPage() {
                     startDate ||
                     new Date().toISOString().split("T")[0]
                   }
-                  onChange={(e) => setEndDate(e.target.value)}
+                  onChange={(e) =>
+                    setEndDate(e.target.value)
+                  }
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
                 />
               </div>
@@ -305,6 +326,7 @@ export default function BookingPage() {
               <div className="mt-6 rounded-xl bg-gray-50 p-5">
                 <div className="flex justify-between text-sm text-gray-600">
                   <span>Rental Duration</span>
+
                   <span className="font-semibold text-gray-900">
                     {days} {days === 1 ? "day" : "days"}
                   </span>
