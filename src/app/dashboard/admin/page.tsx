@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import api from "@/lib/api";
 
@@ -21,13 +21,8 @@ type Gear = {
   pricePerDay: number;
   stock?: number;
   isAvailable?: boolean;
-  category?: {
-    name: string;
-  };
-  provider?: {
-    name: string;
-    email: string;
-  };
+  category?: { name: string };
+  provider?: { name: string; email: string };
 };
 
 type Rental = {
@@ -35,20 +30,15 @@ type Rental = {
   status: string;
   totalAmount: number;
   createdAt: string;
-  customer?: {
-    name: string;
-    email: string;
-  };
+  customer?: { name: string; email: string };
   items?: {
     quantity: number;
-    gearItem?: {
-      name: string;
-    };
+    gearItem?: { name: string };
   }[];
-  payment?: {
-    status: string;
-  };
+  payment?: { status: string };
 };
+
+const USERS_PER_PAGE = 5;
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -56,10 +46,11 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [gears, setGears] = useState<Gear[]>([]);
   const [rentals, setRentals] = useState<Rental[]>([]);
-
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState("");
+  const [userSearch, setUserSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const loadDashboard = async () => {
     try {
@@ -115,9 +106,7 @@ export default function AdminDashboard() {
       setUpdatingId(id);
       setError("");
 
-      await api.patch(`/admin/users/${id}`, {
-        status,
-      });
+      await api.patch(`/admin/users/${id}`, { status });
 
       await loadDashboard();
     } catch (err: any) {
@@ -132,6 +121,45 @@ export default function AdminDashboard() {
     }
   };
 
+  const filteredUsers = useMemo(() => {
+    const search = userSearch.trim().toLowerCase();
+
+    if (!search) return users;
+
+    return users.filter((user) => {
+      return (
+        user.name.toLowerCase().includes(search) ||
+        user.email.toLowerCase().includes(search) ||
+        user.role.toLowerCase().includes(search) ||
+        user.status.toLowerCase().includes(search)
+      );
+    });
+  }, [users, userSearch]);
+
+  const totalPages = Math.ceil(
+    filteredUsers.length / USERS_PER_PAGE
+  );
+
+  const paginatedUsers = useMemo(() => {
+    const startIndex =
+      (currentPage - 1) * USERS_PER_PAGE;
+
+    return filteredUsers.slice(
+      startIndex,
+      startIndex + USERS_PER_PAGE
+    );
+  }, [filteredUsers, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [userSearch]);
+
+  useEffect(() => {
+    if (totalPages > 0 && currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
   const activeUsers = users.filter(
     (user) => user.status === "ACTIVE"
   ).length;
@@ -141,8 +169,19 @@ export default function AdminDashboard() {
   ).length;
 
   const totalRevenue = rentals.reduce(
-    (sum, rental) => sum + Number(rental.totalAmount || 0),
+    (sum, rental) =>
+      sum + Number(rental.totalAmount || 0),
     0
+  );
+
+  const startUserNumber =
+    filteredUsers.length === 0
+      ? 0
+      : (currentPage - 1) * USERS_PER_PAGE + 1;
+
+  const endUserNumber = Math.min(
+    currentPage * USERS_PER_PAGE,
+    filteredUsers.length
   );
 
   if (loading) {
@@ -163,6 +202,7 @@ export default function AdminDashboard() {
             <h1 className="text-2xl font-extrabold text-gray-900">
               Admin Dashboard
             </h1>
+
             <p className="text-sm text-gray-500">
               Manage users, gear and rental orders
             </p>
@@ -190,45 +230,35 @@ export default function AdminDashboard() {
         {/* Statistics */}
         <div className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <div className="rounded-xl bg-white p-6 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Total Users
-            </p>
+            <p className="text-sm text-gray-500">Total Users</p>
             <p className="mt-2 text-3xl font-bold text-gray-900">
               {users.length}
             </p>
           </div>
 
           <div className="rounded-xl bg-white p-6 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Active Users
-            </p>
+            <p className="text-sm text-gray-500">Active Users</p>
             <p className="mt-2 text-3xl font-bold text-green-600">
               {activeUsers}
             </p>
           </div>
 
           <div className="rounded-xl bg-white p-6 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Suspended Users
-            </p>
+            <p className="text-sm text-gray-500">Suspended Users</p>
             <p className="mt-2 text-3xl font-bold text-red-600">
               {suspendedUsers}
             </p>
           </div>
 
           <div className="rounded-xl bg-white p-6 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Total Gear
-            </p>
+            <p className="text-sm text-gray-500">Total Gear</p>
             <p className="mt-2 text-3xl font-bold text-blue-600">
               {gears.length}
             </p>
           </div>
 
           <div className="rounded-xl bg-white p-6 shadow-sm">
-            <p className="text-sm text-gray-500">
-              Rental Revenue
-            </p>
+            <p className="text-sm text-gray-500">Rental Revenue</p>
             <p className="mt-2 text-2xl font-bold text-purple-600">
               ৳{totalRevenue}
             </p>
@@ -237,97 +267,201 @@ export default function AdminDashboard() {
 
         {/* Users */}
         <div className="mb-8 rounded-xl bg-white p-6 shadow-sm">
-          <h2 className="mb-5 text-xl font-bold text-gray-900">
-            User Management
-          </h2>
+          <div className="mb-5 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">
+                User Management
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-500">
+                Search and manage registered users
+              </p>
+            </div>
+
+            <div className="w-full md:w-80">
+              <input
+                type="text"
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                placeholder="Search name, email, role..."
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-100"
+              />
+            </div>
+          </div>
 
           {users.length === 0 ? (
-            <p className="text-gray-500">
-              No users found.
-            </p>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full min-w-[800px] text-left">
-                <thead>
-                  <tr className="border-b text-sm text-gray-500">
-                    <th className="px-3 py-3">Name</th>
-                    <th className="px-3 py-3">Email</th>
-                    <th className="px-3 py-3">Role</th>
-                    <th className="px-3 py-3">Status</th>
-                    <th className="px-3 py-3">Action</th>
-                  </tr>
-                </thead>
+            <p className="text-gray-500">No users found.</p>
+          ) : filteredUsers.length === 0 ? (
+            <div className="rounded-lg bg-gray-50 p-6 text-center">
+              <p className="font-semibold text-gray-700">
+                No users match your search.
+              </p>
 
-                <tbody>
-                  {users.map((user) => (
-                    <tr
-                      key={user.id}
-                      className="border-b last:border-0"
-                    >
-                      <td className="px-3 py-4 font-semibold text-gray-900">
-                        {user.name}
-                      </td>
-
-                      <td className="px-3 py-4 text-sm text-gray-600">
-                        {user.email}
-                      </td>
-
-                      <td className="px-3 py-4">
-                        <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
-                          {user.role}
-                        </span>
-                      </td>
-
-                      <td className="px-3 py-4">
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            user.status === "ACTIVE"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                        >
-                          {user.status}
-                        </span>
-                      </td>
-
-                      <td className="px-3 py-4">
-                        {user.status === "ACTIVE" ? (
-                          <button
-                            onClick={() =>
-                              updateStatus(
-                                user.id,
-                                "SUSPENDED"
-                              )
-                            }
-                            disabled={updatingId === user.id}
-                            className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:bg-gray-400"
-                          >
-                            {updatingId === user.id
-                              ? "Updating..."
-                              : "Suspend"}
-                          </button>
-                        ) : (
-                          <button
-                            onClick={() =>
-                              updateStatus(
-                                user.id,
-                                "ACTIVE"
-                              )
-                            }
-                            disabled={updatingId === user.id}
-                            className="rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:bg-gray-400"
-                          >
-                            {updatingId === user.id
-                              ? "Updating..."
-                              : "Activate"}
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <button
+                onClick={() => setUserSearch("")}
+                className="mt-3 text-sm font-semibold text-blue-600 hover:underline"
+              >
+                Clear search
+              </button>
             </div>
+          ) : (
+            <>
+              <div className="mb-4 flex flex-col justify-between gap-2 text-sm text-gray-500 sm:flex-row sm:items-center">
+                <p>
+                  Showing{" "}
+                  <span className="font-semibold text-gray-900">
+                    {startUserNumber}
+                  </span>{" "}
+                  -{" "}
+                  <span className="font-semibold text-gray-900">
+                    {endUserNumber}
+                  </span>{" "}
+                  of{" "}
+                  <span className="font-semibold text-gray-900">
+                    {filteredUsers.length}
+                  </span>{" "}
+                  users
+                </p>
+
+                {userSearch && (
+                  <p>
+                    Search:{" "}
+                    <span className="font-semibold text-gray-900">
+                      {userSearch}
+                    </span>
+                  </p>
+                )}
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[800px] text-left">
+                  <thead>
+                    <tr className="border-b text-sm text-gray-500">
+                      <th className="px-3 py-3">Name</th>
+                      <th className="px-3 py-3">Email</th>
+                      <th className="px-3 py-3">Role</th>
+                      <th className="px-3 py-3">Status</th>
+                      <th className="px-3 py-3">Action</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {paginatedUsers.map((user) => (
+                      <tr
+                        key={user.id}
+                        className="border-b last:border-0"
+                      >
+                        <td className="px-3 py-4 font-semibold text-gray-900">
+                          {user.name}
+                        </td>
+
+                        <td className="px-3 py-4 text-sm text-gray-600">
+                          {user.email}
+                        </td>
+
+                        <td className="px-3 py-4">
+                          <span className="rounded-full bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700">
+                            {user.role}
+                          </span>
+                        </td>
+
+                        <td className="px-3 py-4">
+                          <span
+                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                              user.status === "ACTIVE"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
+                            }`}
+                          >
+                            {user.status}
+                          </span>
+                        </td>
+
+                        <td className="px-3 py-4">
+                          {user.status === "ACTIVE" ? (
+                            <button
+                              onClick={() =>
+                                updateStatus(
+                                  user.id,
+                                  "SUSPENDED"
+                                )
+                              }
+                              disabled={updatingId === user.id}
+                              className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:bg-gray-400"
+                            >
+                              {updatingId === user.id
+                                ? "Updating..."
+                                : "Suspend"}
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() =>
+                                updateStatus(
+                                  user.id,
+                                  "ACTIVE"
+                                )
+                              }
+                              disabled={updatingId === user.id}
+                              className="rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:bg-gray-400"
+                            >
+                              {updatingId === user.id
+                                ? "Updating..."
+                                : "Activate"}
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                  <button
+                    onClick={() =>
+                      setCurrentPage((page) =>
+                        Math.max(page - 1, 1)
+                      )
+                    }
+                    disabled={currentPage === 1}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Previous
+                  </button>
+
+                  {Array.from(
+                    { length: totalPages },
+                    (_, index) => index + 1
+                  ).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`h-10 min-w-10 rounded-lg px-3 text-sm font-semibold ${
+                        currentPage === page
+                          ? "bg-gray-900 text-white"
+                          : "border border-gray-300 text-gray-700 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() =>
+                      setCurrentPage((page) =>
+                        Math.min(page + 1, totalPages)
+                      )
+                    }
+                    disabled={currentPage === totalPages}
+                    className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -338,9 +472,7 @@ export default function AdminDashboard() {
           </h2>
 
           {gears.length === 0 ? (
-            <p className="text-gray-500">
-              No gear found.
-            </p>
+            <p className="text-gray-500">No gear found.</p>
           ) : (
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {gears.map((gear) => (
@@ -353,13 +485,11 @@ export default function AdminDashboard() {
                   </h3>
 
                   <p className="mt-2 text-sm text-gray-500">
-                    Category:{" "}
-                    {gear.category?.name || "N/A"}
+                    Category: {gear.category?.name || "N/A"}
                   </p>
 
                   <p className="mt-1 text-sm text-gray-500">
-                    Provider:{" "}
-                    {gear.provider?.name || "N/A"}
+                    Provider: {gear.provider?.name || "N/A"}
                   </p>
 
                   <p className="mt-2 font-semibold text-gray-900">
@@ -450,8 +580,7 @@ export default function AdminDashboard() {
 
                       <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-semibold text-green-700">
                         Payment:{" "}
-                        {rental.payment?.status ||
-                          "N/A"}
+                        {rental.payment?.status || "N/A"}
                       </span>
                     </div>
                   </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import api from "@/lib/api";
 
@@ -292,10 +293,12 @@ export default function GearPage() {
                   className="group overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-gray-100 transition duration-300 hover:-translate-y-1 hover:shadow-xl"
                 >
                   <div className="relative h-64 overflow-hidden bg-gray-200">
-                    <img
+                    <Image
                       src={gearImage}
                       alt={gear.name}
-                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                      fill
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover transition duration-500 group-hover:scale-105"
                     />
 
                     <div
