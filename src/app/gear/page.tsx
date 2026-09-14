@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -13,6 +12,7 @@ interface Gear {
   location?: string;
   image?: string;
   available?: boolean;
+  isAvailable?: boolean;
 }
 
 const fallbackImages = [
@@ -24,15 +24,15 @@ const fallbackImages = [
   "https://images.unsplash.com/photo-1538805060514-97d9cc17730c",
 ];
 
-const displayNames = [
-  "Mountain Bike",
-  "Treadmill",
-  "Dumbbell Set",
-  "Barbell Set",
-  "Exercise Bike",
-  "Yoga Mat",
-  "Mountain Bike",
-];
+const gearImageMap: Record<string, string> = {
+  Treadmill: fallbackImages[0],
+  "Dumbbell Set": fallbackImages[1],
+  "Barbell Set": fallbackImages[2],
+  "Exercise Bike": fallbackImages[3],
+  "Yoga Mat": fallbackImages[4],
+  "Mountain Bike": fallbackImages[5],
+  Kettlebell: fallbackImages[0],
+};
 
 export default function GearPage() {
   const [gears, setGears] = useState<Gear[]>([]);
@@ -47,6 +47,9 @@ export default function GearPage() {
     const fetchGears = async () => {
       try {
         const response = await api.get("/gear");
+
+        console.log("ALL GEARS FROM API:", response.data?.data);
+
         setGears(response.data?.data || []);
       } catch (err: any) {
         setError(
@@ -62,25 +65,33 @@ export default function GearPage() {
   }, []);
 
   const filteredGears = useMemo(() => {
-  return gears.filter((gear, index) => {
-    const displayName = displayNames[index] || gear.name;
-    const searchText = search.toLowerCase().trim();
+    return gears.filter((gear) => {
+      const displayName = gear.name;
+      const searchText = search.toLowerCase().trim();
 
-    const matchesSearch =
-      !searchText ||
-      displayName.toLowerCase().includes(searchText);
+      const matchesSearch =
+        !searchText ||
+        displayName.toLowerCase().includes(searchText) ||
+        gear.description?.toLowerCase().includes(searchText);
 
-    const matchesPrice =
-      !maxPrice || gear.pricePerDay <= Number(maxPrice);
+      const matchesPrice =
+        !maxPrice || gear.pricePerDay <= Number(maxPrice);
 
-    const matchesAvailability =
-      availability === "all" ||
-      (availability === "available" && gear.available !== false) ||
-      (availability === "unavailable" && gear.available === false);
+      const matchesAvailability =
+        availability === "all" ||
+        (availability === "available" &&
+          gear.available !== false &&
+          gear.isAvailable !== false) ||
+        (availability === "unavailable" &&
+          (gear.available === false || gear.isAvailable === false));
 
-    return matchesSearch && matchesPrice && matchesAvailability;
-  });
-}, [gears, search, maxPrice, availability]);
+      return (
+        matchesSearch &&
+        matchesPrice &&
+        matchesAvailability
+      );
+    });
+  }, [gears, search, maxPrice, availability]);
 
   const clearFilters = () => {
     setSearch("");
@@ -221,7 +232,9 @@ export default function GearPage() {
               Unable to load gears
             </h2>
 
-            <p className="mt-2 text-sm text-red-600">{error}</p>
+            <p className="mt-2 text-sm text-red-600">
+              {error}
+            </p>
           </div>
         </section>
       )}
@@ -264,12 +277,14 @@ export default function GearPage() {
 
           <div className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
             {filteredGears.map((gear) => {
-              const originalIndex = gears.findIndex(
-                (item) => item.id === gear.id
-              );
+              const gearImage =
+                gear.image ||
+                gearImageMap[gear.name] ||
+                fallbackImages[0];
 
-              const displayName =
-                displayNames[originalIndex] || gear.name;
+              const isAvailable =
+                gear.available !== false &&
+                gear.isAvailable !== false;
 
               return (
                 <article
@@ -278,32 +293,25 @@ export default function GearPage() {
                 >
                   <div className="relative h-64 overflow-hidden bg-gray-200">
                     <img
-                      src={
-                        gear.image ||
-                        fallbackImages[
-                          originalIndex % fallbackImages.length
-                        ]
-                      }
-                      alt={displayName}
+                      src={gearImage}
+                      alt={gear.name}
                       className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
                     />
 
                     <div
                       className={`absolute left-4 top-4 rounded-full px-3 py-1 text-xs font-bold shadow ${
-                        gear.available === false
+                        !isAvailable
                           ? "bg-red-100 text-red-700"
                           : "bg-green-100 text-green-700"
                       }`}
                     >
-                      {gear.available === false
-                        ? "Unavailable"
-                        : "Available"}
+                      {!isAvailable ? "Unavailable" : "Available"}
                     </div>
                   </div>
 
                   <div className="p-6">
                     <h3 className="text-xl font-bold text-gray-900">
-                      {displayName}
+                      {gear.name}
                     </h3>
 
                     {gear.description && (

@@ -1,6 +1,19 @@
+
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import api from "@/lib/api";
+
+interface Gear {
+  id: string;
+  name: string;
+  description?: string;
+  pricePerDay: number;
+  image?: string;
+  isAvailable?: boolean;
+  available?: boolean;
+}
 
 const categories = [
   {
@@ -25,35 +38,24 @@ const categories = [
   },
 ];
 
-const featuredGears = [
-  {
-    name: "Premium Dumbbell Set",
-    category: "Strength Training",
-    price: "৳500",
-    period: "/day",
-    rating: "4.9",
-    image:
-      "https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?auto=format&fit=crop&w=900&q=85",
-  },
-  {
-    name: "Professional Treadmill",
-    category: "Cardio",
-    price: "৳1,200",
-    period: "/day",
-    rating: "4.8",
-    image:
-      "https://images.unsplash.com/photo-1596357395217-80de13130e92?auto=format&fit=crop&w=900&q=85",
-  },
-  {
-    name: "Olympic Barbell Set",
-    category: "Strength Training",
-    price: "৳800",
-    period: "/day",
-    rating: "4.9",
-    image:
-      "https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=900&q=85",
-  },
+const fallbackImages = [
+  "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e",
+  "https://images.unsplash.com/photo-1599058917212-d750089bc07e",
+  "https://images.unsplash.com/photo-1534438327276-14e5300c3a48",
+  "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
+  "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b",
+  "https://images.unsplash.com/photo-1538805060514-97d9cc17730c",
 ];
+
+const gearImageMap: Record<string, string> = {
+  Treadmill: fallbackImages[0],
+  "Dumbbell Set": fallbackImages[1],
+  "Barbell Set": fallbackImages[2],
+  "Exercise Bike": fallbackImages[3],
+  "Yoga Mat": fallbackImages[4],
+  "Mountain Bike": fallbackImages[5],
+  Kettlebell: fallbackImages[0],
+};
 
 const steps = [
   {
@@ -77,6 +79,31 @@ const steps = [
 ];
 
 export default function HomePage() {
+  const [gears, setGears] = useState<Gear[]>([]);
+  const [loadingGears, setLoadingGears] = useState(true);
+  const [gearError, setGearError] = useState("");
+
+  useEffect(() => {
+    const fetchFeaturedGears = async () => {
+      try {
+        const response = await api.get("/gear");
+
+        console.log("HOME GEARS FROM API:", response.data?.data);
+
+        setGears((response.data?.data || []).slice(0, 3));
+      } catch (err: any) {
+        setGearError(
+          err?.response?.data?.message ||
+            "Failed to load featured gears."
+        );
+      } finally {
+        setLoadingGears(false);
+      }
+    };
+
+    fetchFeaturedGears();
+  }, []);
+
   return (
     <main className="min-h-screen bg-white text-slate-950">
       {/* Navbar */}
@@ -93,18 +120,21 @@ export default function HomePage() {
             >
               Home
             </Link>
+
             <Link
               href="/gear"
               className="text-sm font-medium text-slate-600 transition hover:text-slate-950"
             >
               Explore Gears
             </Link>
+
             <Link
               href="#how-it-works"
               className="text-sm font-medium text-slate-600 transition hover:text-slate-950"
             >
               How It Works
             </Link>
+
             <Link
               href="#why-us"
               className="text-sm font-medium text-slate-600 transition hover:text-slate-950"
@@ -139,6 +169,7 @@ export default function HomePage() {
             alt="Fitness training"
             className="h-full w-full object-cover opacity-35"
           />
+
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-slate-950/90 to-slate-950/30" />
         </div>
 
@@ -263,54 +294,118 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
-            {featuredGears.map((gear) => (
-              <article
-                key={gear.name}
-                className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+          {loadingGears && (
+            <div className="rounded-3xl bg-white p-12 text-center shadow-sm">
+              <p className="font-semibold text-slate-500">
+                Loading featured gears...
+              </p>
+            </div>
+          )}
+
+          {!loadingGears && gearError && (
+            <div className="rounded-3xl border border-red-200 bg-red-50 p-8 text-center">
+              <p className="font-semibold text-red-600">{gearError}</p>
+
+              <Link
+                href="/gear"
+                className="mt-4 inline-block rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white"
               >
-                <div className="relative h-64 overflow-hidden">
-                  <img
-                    src={gear.image}
-                    alt={gear.name}
-                    className="h-full w-full object-cover transition duration-500 hover:scale-105"
-                  />
+                Browse All Gears
+              </Link>
+            </div>
+          )}
 
-                  <div className="absolute left-4 top-4 rounded-full bg-white px-3 py-1.5 text-xs font-bold text-slate-800">
-                    {gear.category}
-                  </div>
-                </div>
+          {!loadingGears && !gearError && gears.length === 0 && (
+            <div className="rounded-3xl bg-white p-12 text-center shadow-sm">
+              <p className="font-semibold text-slate-500">
+                No gears available right now.
+              </p>
+            </div>
+          )}
 
-                <div className="p-6">
-                  <div className="mb-2 flex items-center justify-between gap-4">
-                    <h3 className="text-xl font-bold">{gear.name}</h3>
+          {!loadingGears && !gearError && gears.length > 0 && (
+            <div className="grid gap-7 md:grid-cols-2 lg:grid-cols-3">
+              {gears.map((gear) => {
+                const gearImage =
+                  gear.image ||
+                  gearImageMap[gear.name] ||
+                  fallbackImages[0];
 
-                    <span className="whitespace-nowrap text-sm font-bold">
-                      ⭐ {gear.rating}
-                    </span>
-                  </div>
+                const isAvailable =
+                  gear.available !== false &&
+                  gear.isAvailable !== false;
 
-                  <div className="mt-5 flex items-end justify-between">
-                    <div>
-                      <span className="text-2xl font-black text-orange-500">
-                        {gear.price}
-                      </span>
-                      <span className="text-sm text-slate-400">
-                        {gear.period}
-                      </span>
+                return (
+                  <article
+                    key={gear.id}
+                    className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm transition duration-300 hover:-translate-y-1 hover:shadow-xl"
+                  >
+                    <div className="relative h-64 overflow-hidden">
+                      <img
+                        src={gearImage}
+                        alt={gear.name}
+                        className="h-full w-full object-cover transition duration-500 hover:scale-105"
+                      />
+
+                      <div
+                        className={`absolute left-4 top-4 rounded-full px-3 py-1.5 text-xs font-bold ${
+                          isAvailable
+                            ? "bg-green-100 text-green-700"
+                            : "bg-red-100 text-red-700"
+                        }`}
+                      >
+                        {isAvailable ? "Available" : "Unavailable"}
+                      </div>
                     </div>
 
-                    <Link
-                      href="/gear"
-                      className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-orange-500"
-                    >
-                      View Gear
-                    </Link>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
+                    <div className="p-6">
+                      <div className="mb-2">
+                        <h3 className="text-xl font-bold text-slate-950">
+                          {gear.name}
+                        </h3>
+                      </div>
+
+                      {gear.description && (
+                        <p className="line-clamp-2 text-sm leading-6 text-slate-500">
+                          {gear.description}
+                        </p>
+                      )}
+
+                      <div className="mt-5 flex items-end justify-between gap-4">
+                        <div>
+                          <span className="text-2xl font-black text-orange-500">
+                            ৳{gear.pricePerDay}
+                          </span>
+
+                          <span className="text-sm text-slate-400">
+                            /day
+                          </span>
+                        </div>
+
+                        <Link
+                          href={`/gear/${gear.id}`}
+                          className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-orange-500"
+                        >
+                          View Gear
+                        </Link>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+
+          {!loadingGears && !gearError && gears.length > 0 && (
+            <div className="mt-8 text-center">
+              <Link
+                href="/gear"
+                className="inline-flex rounded-full border border-slate-300 px-6 py-3 font-bold text-slate-700 transition hover:border-orange-500 hover:bg-orange-500 hover:text-white"
+              >
+                View All Gears →
+              </Link>
+            </div>
+          )}
         </div>
       </section>
 
@@ -373,10 +468,26 @@ export default function HomePage() {
 
           <div className="grid gap-5 sm:grid-cols-2">
             {[
-              ["01", "Quality Equipment", "Access reliable gear from verified providers."],
-              ["02", "Flexible Rentals", "Choose rental dates that fit your schedule."],
-              ["03", "Secure Payments", "Complete payments through a secure gateway."],
-              ["04", "Trusted Community", "Read ratings and reviews before booking."],
+              [
+                "01",
+                "Quality Equipment",
+                "Access reliable gear from verified providers.",
+              ],
+              [
+                "02",
+                "Flexible Rentals",
+                "Choose rental dates that fit your schedule.",
+              ],
+              [
+                "03",
+                "Secure Payments",
+                "Complete payments through a secure gateway.",
+              ],
+              [
+                "04",
+                "Trusted Community",
+                "Read ratings and reviews before booking.",
+              ],
             ].map(([number, title, description]) => (
               <div
                 key={number}
@@ -386,7 +497,9 @@ export default function HomePage() {
                   {number}
                 </span>
 
-                <h3 className="mt-5 text-lg font-bold text-white">{title}</h3>
+                <h3 className="mt-5 text-lg font-bold text-white">
+                  {title}
+                </h3>
 
                 <p className="mt-2 text-sm leading-6 text-slate-400">
                   {description}
@@ -445,9 +558,11 @@ export default function HomePage() {
             <Link href="/gear" className="hover:text-slate-950">
               Explore Gears
             </Link>
+
             <Link href="/login" className="hover:text-slate-950">
               Login
             </Link>
+
             <Link href="/register" className="hover:text-slate-950">
               Register
             </Link>
@@ -461,3 +576,4 @@ export default function HomePage() {
     </main>
   );
 }
+

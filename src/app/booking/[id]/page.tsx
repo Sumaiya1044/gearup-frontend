@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -16,10 +17,10 @@ interface Gear {
 }
 
 export default function BookingPage() {
-  const params = useParams();
+  const params = useParams<{ id: string }>();
   const router = useRouter();
 
-  const gearId = params.id as string;
+  const gearId = params.id;
 
   const [gear, setGear] = useState<Gear | null>(null);
   const [loading, setLoading] = useState(true);
@@ -35,8 +36,15 @@ export default function BookingPage() {
     const fetchGear = async () => {
       try {
         const response = await api.get(`/gear/${gearId}`);
+
+        console.log("BOOKING RESPONSE:", response.data);
+
         setGear(response.data?.data);
+
+        console.log("GEAR SET:", response.data?.data);
       } catch (err: any) {
+        console.error("BOOKING GEAR ERROR:", err);
+
         setError(
           err?.response?.data?.message ||
             "Failed to load gear information."
@@ -73,7 +81,9 @@ export default function BookingPage() {
       ? gear.pricePerDay * quantity * days
       : 0;
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (
+    e: React.FormEvent<HTMLFormElement>
+  ) => {
     e.preventDefault();
 
     setError("");
@@ -97,6 +107,17 @@ export default function BookingPage() {
     try {
       setSubmitting(true);
 
+      console.log("BOOKING CREATE REQUEST:", {
+        startDate,
+        endDate,
+        items: [
+          {
+            gearItemId: gearId,
+            quantity,
+          },
+        ],
+      });
+
       const response = await api.post("/rentals", {
         startDate,
         endDate,
@@ -107,6 +128,11 @@ export default function BookingPage() {
           },
         ],
       });
+
+      console.log(
+        "BOOKING CREATE RESPONSE:",
+        response.data
+      );
 
       if (response.data?.success) {
         setSuccess("Booking created successfully!");
@@ -121,6 +147,13 @@ export default function BookingPage() {
         );
       }
     } catch (err: any) {
+      console.error("BOOKING CREATE ERROR:", err);
+
+      console.error(
+        "BOOKING CREATE ERROR RESPONSE:",
+        err?.response?.data
+      );
+
       setError(
         err?.response?.data?.message ||
           "Failed to create booking."
@@ -239,7 +272,9 @@ export default function BookingPage() {
                     : "bg-red-100 text-red-700"
                 }`}
               >
-                {isAvailable ? "Available" : "Unavailable"}
+                {isAvailable
+                  ? "Available"
+                  : "Unavailable"}
               </span>
             </div>
           </div>
@@ -284,7 +319,11 @@ export default function BookingPage() {
                   onChange={(e) =>
                     setStartDate(e.target.value)
                   }
-                  min={new Date().toISOString().split("T")[0]}
+                  min={
+                    new Date()
+                      .toISOString()
+                      .split("T")[0]
+                  }
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                   required
                 />
@@ -303,7 +342,9 @@ export default function BookingPage() {
                   }
                   min={
                     startDate ||
-                    new Date().toISOString().split("T")[0]
+                    new Date()
+                      .toISOString()
+                      .split("T")[0]
                   }
                   className="w-full rounded-xl border border-gray-300 px-4 py-3 outline-none focus:border-blue-500"
                   required
@@ -359,7 +400,9 @@ export default function BookingPage() {
 
               <button
                 type="submit"
-                disabled={submitting || !isAvailable}
+                disabled={
+                  submitting || !isAvailable
+                }
                 className="w-full rounded-xl bg-blue-600 px-6 py-3 font-bold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-gray-400"
               >
                 {submitting

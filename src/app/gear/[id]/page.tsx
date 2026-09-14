@@ -13,6 +13,7 @@ interface Gear {
   location?: string;
   image?: string;
   available?: boolean;
+  isAvailable?: boolean;
 }
 
 const fallbackImages = [
@@ -24,15 +25,15 @@ const fallbackImages = [
   "https://images.unsplash.com/photo-1538805060514-97d9cc17730c",
 ];
 
-const displayNames = [
-  "Mountain Bike",
-  "Treadmill",
-  "Dumbbell Set",
-  "Barbell Set",
-  "Exercise Bike",
-  "Yoga Mat",
-  "Mountain Bike",
-];
+const gearImageMap: Record<string, string> = {
+  Treadmill: fallbackImages[0],
+  "Dumbbell Set": fallbackImages[1],
+  "Barbell Set": fallbackImages[2],
+  "Exercise Bike": fallbackImages[3],
+  "Yoga Mat": fallbackImages[4],
+  "Mountain Bike": fallbackImages[5],
+  Kettlebell: fallbackImages[0],
+};
 
 export default function GearDetailsPage() {
   const params = useParams();
@@ -46,6 +47,9 @@ export default function GearDetailsPage() {
     const fetchGear = async () => {
       try {
         const response = await api.get(`/gear/${params.id}`);
+
+        console.log("DETAIL GEAR:", response.data);
+
         setGear(response.data?.data || null);
       } catch (err: any) {
         setError(
@@ -125,7 +129,13 @@ export default function GearDetailsPage() {
     );
   }
 
-  const gearIndex = 0;
+  const isAvailable =
+    gear.isAvailable !== undefined
+      ? gear.isAvailable
+      : gear.available !== false;
+
+  const gearImage =
+    gear.image || gearImageMap[gear.name] || fallbackImages[0];
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -151,19 +161,19 @@ export default function GearDetailsPage() {
         <div className="grid gap-10 overflow-hidden rounded-3xl bg-white p-6 shadow-sm md:grid-cols-2 md:p-10">
           <div className="relative overflow-hidden rounded-2xl bg-gray-200">
             <img
-              src={gear.image || fallbackImages[gearIndex]}
-              alt={displayNames[gearIndex] || gear.name}
+              src={gearImage}
+              alt={gear.name}
               className="h-[420px] w-full object-cover md:h-[520px]"
             />
 
             <div
               className={`absolute left-5 top-5 rounded-full px-4 py-2 text-sm font-bold shadow ${
-                gear.available === false
+                !isAvailable
                   ? "bg-red-100 text-red-700"
                   : "bg-green-100 text-green-700"
               }`}
             >
-              {gear.available === false ? "Unavailable" : "Available"}
+              {!isAvailable ? "Unavailable" : "Available"}
             </div>
           </div>
 
@@ -173,7 +183,7 @@ export default function GearDetailsPage() {
             </p>
 
             <h1 className="mt-3 text-4xl font-extrabold tracking-tight text-gray-900 md:text-5xl">
-              {displayNames[gearIndex] || gear.name}
+              {gear.name}
             </h1>
 
             {gear.description && (
@@ -214,7 +224,7 @@ export default function GearDetailsPage() {
             </div>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              {gear.available === false ? (
+              {!isAvailable ? (
                 <button
                   disabled
                   className="rounded-xl bg-gray-300 px-7 py-3.5 font-bold text-gray-500"

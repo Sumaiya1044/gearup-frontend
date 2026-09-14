@@ -4,23 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
 
-interface GearItem {
-  id: string;
-  name: string;
-  pricePerDay: number;
-}
-
 interface RentalItem {
-  id: string;
+  id?: string;
   quantity: number;
-  pricePerDay: number;
-  gearItem: GearItem;
-}
-
-interface Payment {
-  id: string;
-  status: string;
-  amount: number;
+  gearItem?: {
+    id: string;
+    name: string;
+    pricePerDay: number;
+  };
 }
 
 interface Rental {
@@ -30,21 +21,28 @@ interface Rental {
   totalAmount: number;
   status: string;
   createdAt: string;
-  items: RentalItem[];
-  payment?: Payment | null;
+  items?: RentalItem[];
+  payment?: {
+    status?: string;
+  };
 }
 
 export default function MyBookingsPage() {
-  const [rentals, setRentals] = useState<Rental[]>([]);
+  const [bookings, setBookings] = useState<Rental[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const fetchRentals = async () => {
+    const fetchBookings = async () => {
       try {
         const response = await api.get("/rentals");
-        setRentals(response.data?.data || []);
+
+        console.log("MY BOOKINGS RESPONSE:", response.data);
+
+        setBookings(response.data?.data || []);
       } catch (err: any) {
+        console.error("MY BOOKINGS ERROR:", err);
+
         setError(
           err?.response?.data?.message ||
             "Failed to load your bookings."
@@ -54,16 +52,18 @@ export default function MyBookingsPage() {
       }
     };
 
-    fetchRentals();
+    fetchBookings();
   }, []);
 
-  const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString("en-GB", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
-  };
+  if (loading) {
+    return (
+      <main className="flex min-h-screen items-center justify-center bg-gray-50">
+        <p className="text-lg font-medium text-gray-500">
+          Loading your bookings...
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -78,67 +78,49 @@ export default function MyBookingsPage() {
 
           <div className="flex gap-3">
             <Link
-              href="/dashboard/customer"
+              href="/gear"
               className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-100"
             >
-              Dashboard
+              Browse Gears
             </Link>
 
             <Link
-              href="/gear"
+              href="/dashboard/customer"
               className="rounded-lg bg-gray-900 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
             >
-              Browse Gears
+              Dashboard
             </Link>
           </div>
         </div>
       </nav>
 
-      <section className="mx-auto max-w-7xl px-6 py-12">
-        <div className="mb-8">
-          <p className="text-sm font-bold uppercase tracking-wider text-blue-600">
-            Customer Dashboard
-          </p>
-
-          <h1 className="mt-2 text-4xl font-extrabold text-gray-900">
+      <section className="mx-auto max-w-6xl px-6 py-12">
+        <div>
+          <h1 className="text-3xl font-extrabold text-gray-900">
             My Bookings
           </h1>
 
-          <p className="mt-3 text-gray-600">
-            View your rental history, booking dates, status and payments.
+          <p className="mt-2 text-gray-500">
+            View your gear rental history and booking status.
           </p>
         </div>
 
-        {loading && (
-          <div className="rounded-2xl bg-white p-16 text-center shadow-sm">
-            <p className="text-lg font-medium text-gray-500">
-              Loading your bookings...
-            </p>
-          </div>
-        )}
-
-        {!loading && error && (
-          <div className="rounded-2xl border border-red-200 bg-red-50 p-6">
-            <h2 className="font-bold text-red-700">
-              Unable to load bookings
-            </h2>
-
-            <p className="mt-2 text-sm text-red-600">
+        {error && (
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="font-medium text-red-600">
               {error}
             </p>
           </div>
         )}
 
-        {!loading && !error && rentals.length === 0 && (
-          <div className="rounded-2xl bg-white p-16 text-center shadow-sm">
-            <div className="text-5xl">📦</div>
-
-            <h2 className="mt-5 text-2xl font-bold text-gray-900">
+        {!error && bookings.length === 0 && (
+          <div className="mt-8 rounded-2xl bg-white p-10 text-center shadow-sm">
+            <h2 className="text-xl font-bold text-gray-900">
               No bookings yet
             </h2>
 
             <p className="mt-2 text-gray-500">
-              You haven't rented any gear yet.
+              You have not booked any gear yet.
             </p>
 
             <Link
@@ -150,109 +132,121 @@ export default function MyBookingsPage() {
           </div>
         )}
 
-        {!loading && !error && rentals.length > 0 && (
-          <div className="space-y-6">
-            {rentals.map((rental) => (
-              <article
-                key={rental.id}
+        {bookings.length > 0 && (
+          <div className="mt-8 space-y-6">
+            {bookings.map((booking) => (
+              <div
+                key={booking.id}
                 className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100"
               >
-                <div className="flex flex-col justify-between gap-4 border-b border-gray-100 pb-5 md:flex-row md:items-center">
+                <div className="flex flex-col justify-between gap-4 md:flex-row">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                    <p className="text-sm text-gray-500">
                       Booking ID
                     </p>
 
-                    <p className="mt-1 break-all font-mono text-sm text-gray-700">
-                      {rental.id}
+                    <p className="mt-1 break-all font-bold text-gray-900">
+                      {booking.id}
                     </p>
                   </div>
 
-                  <span className="w-fit rounded-full bg-blue-100 px-4 py-2 text-xs font-bold text-blue-700">
-                    {rental.status}
+                  <span className="h-fit rounded-full bg-blue-100 px-4 py-2 text-sm font-bold text-blue-700">
+                    {booking.status}
                   </span>
                 </div>
 
-                <div className="mt-5 grid gap-5 sm:grid-cols-3">
+                <div className="mt-6 grid gap-4 md:grid-cols-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase text-gray-400">
+                    <p className="text-sm text-gray-500">
                       Start Date
                     </p>
 
                     <p className="mt-1 font-semibold text-gray-900">
-                      {formatDate(rental.startDate)}
+                      {new Date(
+                        booking.startDate
+                      ).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-xs font-semibold uppercase text-gray-400">
+                    <p className="text-sm text-gray-500">
                       End Date
                     </p>
 
                     <p className="mt-1 font-semibold text-gray-900">
-                      {formatDate(rental.endDate)}
+                      {new Date(
+                        booking.endDate
+                      ).toLocaleDateString()}
                     </p>
                   </div>
 
                   <div>
-                    <p className="text-xs font-semibold uppercase text-gray-400">
+                    <p className="text-sm text-gray-500">
                       Total Amount
                     </p>
 
-                    <p className="mt-1 text-lg font-extrabold text-gray-900">
-                      ৳{rental.totalAmount}
+                    <p className="mt-1 text-xl font-extrabold text-blue-600">
+                      ৳{booking.totalAmount}
                     </p>
                   </div>
                 </div>
 
-                <div className="mt-6">
-                  <h3 className="mb-3 font-bold text-gray-900">
-                    Rented Gears
-                  </h3>
+                {booking.items &&
+                  booking.items.length > 0 && (
+                    <div className="mt-6 border-t pt-5">
+                      <h3 className="font-bold text-gray-900">
+                        Rented Gear
+                      </h3>
 
-                  <div className="space-y-3">
-                    {rental.items.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex flex-col justify-between gap-2 rounded-xl bg-gray-50 p-4 sm:flex-row sm:items-center"
-                      >
-                        <div>
-                          <p className="font-semibold text-gray-900">
-                            {item.gearItem.name}
-                          </p>
+                      <div className="mt-3 space-y-2">
+                        {booking.items.map(
+                          (item, index) => (
+                            <div
+                              key={
+                                item.id || index
+                              }
+                              className="flex justify-between rounded-lg bg-gray-50 p-3"
+                            >
+                              <span className="font-medium text-gray-700">
+                                {item.gearItem?.name ||
+                                  "Gear"}
+                              </span>
 
-                          <p className="text-sm text-gray-500">
-                            Quantity: {item.quantity} × ৳
-                            {item.pricePerDay}/day
-                          </p>
-                        </div>
-
-                        <p className="font-bold text-gray-900">
-                          ৳
-                          {item.pricePerDay * item.quantity}
-                          /day
-                        </p>
+                              <span className="text-gray-500">
+                                Qty: {item.quantity}
+                              </span>
+                            </div>
+                          )
+                        )}
                       </div>
-                    ))}
+                    </div>
+                  )}
+
+                <div className="mt-6 border-t pt-5">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">
+                      Booked On
+                    </span>
+
+                    <span className="font-medium text-gray-700">
+                      {new Date(
+                        booking.createdAt
+                      ).toLocaleDateString()}
+                    </span>
+                  </div>
+
+                  <div className="mt-2 flex justify-between text-sm">
+                    <span className="text-gray-500">
+                      Payment
+                    </span>
+
+                    <span className="font-semibold text-gray-700">
+                      {booking.payment?.status ||
+                        "Not paid"}
+                    </span>
                   </div>
                 </div>
-
-                <div className="mt-5 flex flex-col gap-2 border-t border-gray-100 pt-5 text-sm sm:flex-row sm:justify-between">
-                  <p className="text-gray-500">
-                    Booked on:{" "}
-                    <span className="font-medium text-gray-700">
-                      {formatDate(rental.createdAt)}
-                    </span>
-                  </p>
-
-                  <p className="text-gray-500">
-                    Payment:{" "}
-                    <span className="font-semibold text-gray-700">
-                      {rental.payment?.status || "Not paid"}
-                    </span>
-                  </p>
-                </div>
-              </article>
+              </div>
             ))}
           </div>
         )}
