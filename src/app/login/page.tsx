@@ -55,6 +55,7 @@ export default function LoginPage() {
       const { token, user } = response.data.data;
 
       login(token, user);
+      document.cookie = `token=${token}; path=/; max-age=86400; SameSite=Lax`;
 
       if (user.role === "ADMIN") {
         router.push("/dashboard/admin");
