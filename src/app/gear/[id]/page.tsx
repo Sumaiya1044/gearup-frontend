@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -160,10 +161,12 @@ export default function GearDetailsPage() {
       <section className="mx-auto max-w-7xl px-6 py-12">
         <div className="grid gap-10 overflow-hidden rounded-3xl bg-white p-6 shadow-sm md:grid-cols-2 md:p-10">
           <div className="relative overflow-hidden rounded-2xl bg-gray-200">
-            <img
+            <Image
               src={gearImage}
               alt={gear.name}
-              className="h-[420px] w-full object-cover md:h-[520px]"
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-cover"
             />
 
             <div

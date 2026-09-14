@@ -1,14 +1,26 @@
-
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
+import api from "@/lib/api";
+
+interface Rental {
+  id: string;
+  status: string;
+  payment?: {
+    status?: string;
+  };
+}
 
 export default function CustomerDashboardPage() {
   const router = useRouter();
   const { user, loadAuth, logout } = useAuthStore();
+
+  const [bookings, setBookings] = useState<Rental[]>([]);
+  const [loadingBookings, setLoadingBookings] = useState(true);
+  const [bookingError, setBookingError] = useState("");
 
   useEffect(() => {
     loadAuth();
@@ -20,10 +32,46 @@ export default function CustomerDashboardPage() {
     }
   }, [user, router]);
 
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        const response = await api.get("/rentals");
+        setBookings(response.data?.data || []);
+      } catch (err: any) {
+        console.error("CUSTOMER DASHBOARD BOOKINGS ERROR:", err);
+
+        setBookingError(
+          err?.response?.data?.message ||
+            "Failed to load booking statistics."
+        );
+      } finally {
+        setLoadingBookings(false);
+      }
+    };
+
+    fetchBookings();
+  }, []);
+
   const handleLogout = () => {
     logout();
     router.push("/login");
   };
+
+  const totalBookings = bookings.length;
+
+  const activeBookings = bookings.filter(
+    (booking) =>
+      booking.status !== "RETURNED" &&
+      booking.status !== "CANCELLED"
+  ).length;
+
+  const completedBookings = bookings.filter(
+    (booking) => booking.status === "RETURNED"
+  ).length;
+
+  const completedPayments = bookings.filter(
+    (booking) => booking.payment?.status === "COMPLETED"
+  ).length;
 
   return (
     <main className="min-h-screen bg-gray-50">
@@ -76,6 +124,14 @@ export default function CustomerDashboardPage() {
           </Link>
         </div>
 
+        {bookingError && (
+          <div className="mt-6 rounded-xl border border-red-200 bg-red-50 p-4">
+            <p className="font-medium text-red-600">
+              {bookingError}
+            </p>
+          </div>
+        )}
+
         <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
             <p className="text-sm font-medium text-gray-500">
@@ -83,7 +139,7 @@ export default function CustomerDashboardPage() {
             </p>
 
             <p className="mt-3 text-3xl font-extrabold text-gray-900">
-              0
+              {loadingBookings ? "..." : totalBookings}
             </p>
           </div>
 
@@ -93,7 +149,7 @@ export default function CustomerDashboardPage() {
             </p>
 
             <p className="mt-3 text-3xl font-extrabold text-blue-600">
-              0
+              {loadingBookings ? "..." : activeBookings}
             </p>
           </div>
 
@@ -103,7 +159,7 @@ export default function CustomerDashboardPage() {
             </p>
 
             <p className="mt-3 text-3xl font-extrabold text-green-600">
-              0
+              {loadingBookings ? "..." : completedBookings}
             </p>
           </div>
 
@@ -113,12 +169,12 @@ export default function CustomerDashboardPage() {
             </p>
 
             <p className="mt-3 text-3xl font-extrabold text-purple-600">
-              0
+              {loadingBookings ? "..." : completedPayments}
             </p>
           </div>
         </div>
 
-        <div className="mt-10 grid gap-6 md:grid-cols-2">
+        <div className="mt-10 grid gap-6 md:grid-cols-3">
           <Link
             href="/gear"
             className="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-lg"
@@ -148,9 +204,23 @@ export default function CustomerDashboardPage() {
               View your booking history, rental status and payments.
             </p>
           </Link>
+
+          <Link
+            href="/dashboard/customer/reviews"
+            className="rounded-2xl bg-white p-7 shadow-sm ring-1 ring-gray-100 transition hover:-translate-y-1 hover:shadow-lg"
+          >
+            <div className="text-3xl">⭐</div>
+
+            <h2 className="mt-4 text-xl font-bold text-gray-900">
+              Reviews & Ratings
+            </h2>
+
+            <p className="mt-2 text-sm leading-6 text-gray-500">
+              Review and rate gear after returning your rental.
+            </p>
+          </Link>
         </div>
       </section>
     </main>
   );
 }
-
