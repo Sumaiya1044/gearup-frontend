@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import api from "@/lib/api";
+import { useAuthStore } from "@/store/authStore";
 
 interface Gear {
   id: string;
@@ -79,6 +80,12 @@ const steps = [
 ];
 
 export default function HomePage() {
+  const { user, logout, loadAuth } = useAuthStore();
+
+  useEffect(() => {
+    loadAuth();
+  }, [loadAuth]);
+
   const [gears, setGears] = useState<Gear[]>([]);
   const [loadingGears, setLoadingGears] = useState(true);
   const [gearError, setGearError] = useState("");
@@ -143,20 +150,54 @@ export default function HomePage() {
             </Link>
           </div>
 
+          {/* Auth Navbar */}
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="hidden rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:block"
-            >
-              Login
-            </Link>
+            {!user ? (
+              <>
+                <Link
+                  href="/login"
+                  className="hidden rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:block"
+                >
+                  Login
+                </Link>
 
-            <Link
-              href="/register"
-              className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-500"
-            >
-              Get Started
-            </Link>
+                <Link
+                  href="/register"
+                  className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-500"
+                >
+                  Get Started
+                </Link>
+              </>
+            ) : (
+              <>
+                <Link
+                  href={
+                    user.role === "ADMIN"
+                      ? "/dashboard/admin"
+                      : user.role === "PROVIDER"
+                      ? "/dashboard/provider"
+                      : "/dashboard/customer"
+                  }
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
+                >
+                  Dashboard
+                </Link>
+
+                <button
+                  onClick={() => {
+                    logout();
+
+                    document.cookie =
+                      "token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+
+                    window.location.href = "/";
+                  }}
+                  className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-orange-500"
+                >
+                  Logout
+                </button>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -382,12 +423,21 @@ export default function HomePage() {
                           </span>
                         </div>
 
-                        <Link
-                          href={`/gear/${gear.id}`}
+                        <button
+                          onClick={() => {
+                            const token = localStorage.getItem("token");
+
+                            if (!token) {
+                              window.location.href = "/login";
+                              return;
+                            }
+
+                            window.location.href = `/gear/${gear.id}`;
+                          }}
                           className="rounded-full bg-slate-950 px-5 py-2.5 text-sm font-bold text-white transition hover:bg-orange-500"
                         >
                           View Gear
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </article>
@@ -559,13 +609,17 @@ export default function HomePage() {
               Explore Gears
             </Link>
 
-            <Link href="/login" className="hover:text-slate-950">
-              Login
-            </Link>
+            {!user && (
+              <>
+                <Link href="/login" className="hover:text-slate-950">
+                  Login
+                </Link>
 
-            <Link href="/register" className="hover:text-slate-950">
-              Register
-            </Link>
+                <Link href="/register" className="hover:text-slate-950">
+                  Register
+                </Link>
+              </>
+            )}
           </div>
         </div>
 
