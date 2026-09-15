@@ -16,6 +16,8 @@ type GearItem = {
 type Rental = {
   id: string;
   status: string;
+  startDate: string;
+  endDate: string;
   items?: GearItem[];
 };
 
@@ -43,13 +45,11 @@ export default function CustomerReviewsPage() {
 
         const response = await api.get("/rentals");
 
-
         const returnedRentals = (
           response.data?.data || []
         ).filter(
           (rental: Rental) => rental.status === "RETURNED"
         );
-
 
         setRentals(returnedRentals);
       } catch (err: any) {
@@ -177,6 +177,39 @@ export default function CustomerReviewsPage() {
             <h2 className="mb-6 text-xl font-bold text-gray-900">
               Submit Your Review
             </h2>
+
+            <div className="mb-6 space-y-4">
+              {rentals.map((rental) => (
+                <div
+                  key={rental.id}
+                  className="rounded-lg border border-gray-200 bg-gray-50 p-4"
+                >
+                  <div className="flex flex-wrap gap-6 text-sm">
+                    <div>
+                      <span className="font-semibold text-gray-700">
+                        From:
+                      </span>{" "}
+                      <span className="text-gray-600">
+                        {new Date(
+                          rental.startDate
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="font-semibold text-gray-700">
+                        To:
+                      </span>{" "}
+                      <span className="text-gray-600">
+                        {new Date(
+                          rental.endDate
+                        ).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
 
             <form
               onSubmit={handleSubmit}
