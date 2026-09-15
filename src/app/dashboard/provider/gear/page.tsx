@@ -21,6 +21,15 @@ type Category = {
   name: string;
 };
 
+const fallbackImages = [
+  "https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e",
+  "https://images.unsplash.com/photo-1599058917212-d750089bc07e",
+  "https://images.unsplash.com/photo-1534438327276-14e5300c3a48",
+  "https://images.unsplash.com/photo-1517836357463-d25dfeac3438",
+  "https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b",
+  "https://images.unsplash.com/photo-1538805060514-97d9cc17730c",
+];
+
 export default function ProviderGearPage() {
   const router = useRouter();
 
@@ -202,6 +211,7 @@ export default function ProviderGearPage() {
             <h1 className="text-2xl font-extrabold text-gray-900">
               My Gears
             </h1>
+
             <p className="text-sm text-gray-500">
               Manage your rental gear
             </p>
@@ -377,22 +387,19 @@ export default function ProviderGearPage() {
           </div>
         ) : (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {gears.map((gear) => (
+            {gears.map((gear, index) => (
               <div
                 key={gear.id}
                 className="overflow-hidden rounded-xl bg-white shadow-sm"
               >
-                {gear.images?.[0] ? (
-                  <img
-                    src={gear.images[0]}
-                    alt={gear.name}
-                    className="h-48 w-full object-cover"
-                  />
-                ) : (
-                  <div className="flex h-48 items-center justify-center bg-gray-100 text-gray-400">
-                    No Image
-                  </div>
-                )}
+                <img
+                  src={
+                    gear.images?.[0] ||
+                    fallbackImages[index % fallbackImages.length]
+                  }
+                  alt={gear.name}
+                  className="h-48 w-full object-cover"
+                />
 
                 <div className="p-5">
                   <div className="flex items-start justify-between gap-3">

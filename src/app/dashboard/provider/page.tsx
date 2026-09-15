@@ -90,6 +90,7 @@ export default function ProviderDashboard() {
 
   const handleLogout = () => {
     logout();
+    document.cookie = "token=; path=/; max-age=0";
     router.push("/login");
   };
 
@@ -104,22 +105,32 @@ export default function ProviderDashboard() {
   return (
     <main className="min-h-screen bg-gray-50">
       <nav className="border-b bg-white px-6 py-4">
-        <div className="mx-auto flex max-w-7xl items-center justify-between">
+        <div className="mx-auto flex max-w-7xl flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <h1 className="text-2xl font-extrabold text-gray-900">
               Provider Dashboard
             </h1>
+
             <p className="text-sm text-gray-500">
               Manage your rental orders
             </p>
           </div>
 
-          <button
-            onClick={handleLogout}
-            className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500"
-          >
-            Logout
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => router.push("/dashboard/provider/gear")}
+              className="rounded-lg bg-blue-600 px-4 py-2 font-semibold text-white hover:bg-blue-500"
+            >
+              My Gears
+            </button>
+
+            <button
+              onClick={handleLogout}
+              className="rounded-lg bg-red-600 px-4 py-2 font-semibold text-white hover:bg-red-500"
+            >
+              Logout
+            </button>
+          </div>
         </div>
       </nav>
 
@@ -133,6 +144,7 @@ export default function ProviderDashboard() {
         <div className="mb-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-xl bg-white p-6 shadow-sm">
             <p className="text-sm text-gray-500">Total Orders</p>
+
             <p className="mt-2 text-3xl font-bold text-gray-900">
               {orders.length}
             </p>
@@ -140,6 +152,7 @@ export default function ProviderDashboard() {
 
           <div className="rounded-xl bg-white p-6 shadow-sm">
             <p className="text-sm text-gray-500">Pending Orders</p>
+
             <p className="mt-2 text-3xl font-bold text-yellow-600">
               {orders.filter((order) => order.status === "PENDING").length}
             </p>
@@ -147,6 +160,7 @@ export default function ProviderDashboard() {
 
           <div className="rounded-xl bg-white p-6 shadow-sm">
             <p className="text-sm text-gray-500">Paid Orders</p>
+
             <p className="mt-2 text-3xl font-bold text-green-600">
               {orders.filter((order) => order.status === "PAID").length}
             </p>
@@ -159,7 +173,9 @@ export default function ProviderDashboard() {
           </h2>
 
           {orders.length === 0 ? (
-            <p className="text-gray-500">No rental orders found.</p>
+            <p className="text-gray-500">
+              No rental orders found.
+            </p>
           ) : (
             <div className="space-y-4">
               {orders.map((order) => (
@@ -175,11 +191,16 @@ export default function ProviderDashboard() {
 
                       <p className="mt-1 text-sm text-gray-500">
                         Start:{" "}
-                        {new Date(order.startDate).toLocaleDateString()}
+                        {new Date(
+                          order.startDate
+                        ).toLocaleDateString()}
                       </p>
 
                       <p className="text-sm text-gray-500">
-                        End: {new Date(order.endDate).toLocaleDateString()}
+                        End:{" "}
+                        {new Date(
+                          order.endDate
+                        ).toLocaleDateString()}
                       </p>
 
                       <p className="mt-2 font-semibold text-gray-900">
@@ -199,7 +220,8 @@ export default function ProviderDashboard() {
                           key={item.id}
                           className="text-sm text-gray-600"
                         >
-                          {item.gearItem?.name || "Gear"} × {item.quantity}
+                          {item.gearItem?.name || "Gear"} ×{" "}
+                          {item.quantity}
                         </p>
                       ))}
                     </div>
@@ -210,7 +232,10 @@ export default function ProviderDashboard() {
                       <>
                         <button
                           onClick={() =>
-                            updateStatus(order.id, "CONFIRMED")
+                            updateStatus(
+                              order.id,
+                              "CONFIRMED"
+                            )
                           }
                           disabled={updatingId === order.id}
                           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-gray-400"
@@ -220,7 +245,10 @@ export default function ProviderDashboard() {
 
                         <button
                           onClick={() =>
-                            updateStatus(order.id, "CANCELLED")
+                            updateStatus(
+                              order.id,
+                              "CANCELLED"
+                            )
                           }
                           disabled={updatingId === order.id}
                           className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:bg-gray-400"
@@ -233,7 +261,10 @@ export default function ProviderDashboard() {
                     {order.status === "CONFIRMED" && (
                       <button
                         onClick={() =>
-                          updateStatus(order.id, "PICKED_UP")
+                          updateStatus(
+                            order.id,
+                            "PICKED_UP"
+                          )
                         }
                         disabled={updatingId === order.id}
                         className="rounded-lg bg-purple-600 px-4 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:bg-gray-400"
@@ -245,7 +276,10 @@ export default function ProviderDashboard() {
                     {order.status === "PICKED_UP" && (
                       <button
                         onClick={() =>
-                          updateStatus(order.id, "RETURNED")
+                          updateStatus(
+                            order.id,
+                            "RETURNED"
+                          )
                         }
                         disabled={updatingId === order.id}
                         className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:bg-gray-400"
