@@ -544,47 +544,8 @@ https://gearup-backend-8d3n.onrender.com/
 * [x] Rental management
 * [x] Review management
 
----
 
-## 📌 Assignment Requirements Covered
 
-The project implements the major required frontend functionality:
-
-* ✅ Responsive UI
-* ✅ Customer authentication
-* ✅ Provider dashboard
-* ✅ Admin dashboard
-* ✅ Gear browsing
-* ✅ Search and filtering
-* ✅ Gear details
-* ✅ Rental booking
-* ✅ Payment integration
-* ✅ Payment success/cancel flow
-* ✅ Customer dashboard
-* ✅ Provider gear management
-* ✅ Provider order management
-* ✅ Admin user management
-* ✅ Admin gear management
-* ✅ Admin rental management
-* ✅ Review and rating system
-* ✅ Protected routes
-* ✅ Middleware authentication
-* ✅ Loading states
-* ✅ Error handling
-* ✅ API integration
-* ✅ Optimized images
-* ✅ Vercel deployment
-* ✅ Render backend integration
-* ✅ GitHub version control
-
----
-
-## 👨‍💻 Developer
-
-### Sumaiya Jahan
-
-**B.Sc. in Computer Science & Engineering**
-Leading University, Sylhet, Bangladesh
 
 ### GitHub
 
@@ -595,3 +556,9 @@ https://github.com/Sumaiya1044
 ## 📄 License
 
 This project was developed for educational and academic purposes.
+
+## 📚 API Documentation
+
+For complete API endpoint details and frontend-backend integration:
+
+👉 [View API Integration Documentation](./API_INTEGRATION.md)
