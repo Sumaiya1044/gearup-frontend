@@ -38,6 +38,20 @@ type Rental = {
   payment?: { status: string };
 };
 
+type Review = {
+  id: string;
+  rating: number;
+  comment?: string;
+  createdAt: string;
+  customer?: {
+    name: string;
+    email: string;
+  };
+  gearItem?: {
+    name: string;
+  };
+};
+
 const USERS_PER_PAGE = 5;
 
 export default function AdminDashboard() {
@@ -46,6 +60,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<User[]>([]);
   const [gears, setGears] = useState<Gear[]>([]);
   const [rentals, setRentals] = useState<Rental[]>([]);
+  const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [updatingId, setUpdatingId] = useState("");
@@ -57,16 +72,22 @@ export default function AdminDashboard() {
       setLoading(true);
       setError("");
 
-      const [usersResponse, gearResponse, rentalsResponse] =
-        await Promise.all([
-          api.get("/admin/users"),
-          api.get("/admin/gear"),
-          api.get("/admin/rentals"),
-        ]);
+      const [
+        usersResponse,
+        gearResponse,
+        rentalsResponse,
+        reviewsResponse,
+      ] = await Promise.all([
+        api.get("/admin/users"),
+        api.get("/admin/gear"),
+        api.get("/admin/rentals"),
+        api.get("/reviews/admin/all"),
+      ]);
 
       setUsers(usersResponse.data?.data || []);
       setGears(gearResponse.data?.data || []);
       setRentals(rentalsResponse.data?.data || []);
+      setReviews(reviewsResponse.data?.data || []);
     } catch (err: any) {
       console.error("ADMIN DASHBOARD ERROR:", err);
 
@@ -115,6 +136,60 @@ export default function AdminDashboard() {
       setError(
         err?.response?.data?.message ||
           "Failed to update user status."
+      );
+    } finally {
+      setUpdatingId("");
+    }
+  };
+
+  const updateRentalStatus = async (
+    id: string,
+    status:
+      | "CONFIRMED"
+      | "PICKED_UP"
+      | "RETURNED"
+      | "CANCELLED"
+  ) => {
+    try {
+      setUpdatingId(id);
+      setError("");
+
+      await api.patch(`/admin/rentals/${id}/status`, {
+        status,
+      });
+
+      await loadDashboard();
+    } catch (err: any) {
+      console.error("UPDATE RENTAL STATUS ERROR:", err);
+
+      setError(
+        err?.response?.data?.message ||
+          "Failed to update rental order status."
+      );
+    } finally {
+      setUpdatingId("");
+    }
+  };
+
+  const updateGearAvailability = async (
+    id: string,
+    isAvailable: boolean
+  ) => {
+    try {
+      setUpdatingId(id);
+      setError("");
+
+      await api.patch(`/gear/admin/${id}/availability`, {
+        isAvailable: !isAvailable,
+      });
+
+      await loadDashboard();
+    } catch (err: any) {
+      console.error("UPDATE GEAR AVAILABILITY ERROR:", err);
+
+      setError(
+        err?.response?.data?.message ||
+          "Failed to update gear availability."
       );
     } finally {
       setUpdatingId("");
@@ -511,6 +586,28 @@ export default function AdminDashboard() {
                       ? "Available"
                       : "Unavailable"}
                   </span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      updateGearAvailability(
+                        gear.id,
+                        Boolean(gear.isAvailable)
+                      )
+                    }
+                    disabled={updatingId === gear.id}
+                    className={`mt-4 w-full rounded-lg px-4 py-2 text-sm font-semibold text-white transition ${
+                      gear.isAvailable
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-green-600 hover:bg-green-700"
+                    } disabled:cursor-not-allowed disabled:opacity-50`}
+                  >
+                    {updatingId === gear.id
+                      ? "Updating..."
+                      : gear.isAvailable
+                      ? "Disable Gear"
+                      : "Enable Gear"}
+                  </button>
                 </div>
               ))}
             </div>
@@ -574,7 +671,17 @@ export default function AdminDashboard() {
                     </div>
 
                     <div className="flex flex-col items-start gap-2">
-                      <span className="rounded-full bg-gray-100 px-3 py-1 text-sm font-semibold text-gray-700">
+                      <span
+                        className={`rounded-full px-3 py-1 text-sm font-semibold ${
+                          rental.status === "CANCELLED"
+                            ? "bg-red-100 text-red-700"
+                            : rental.status === "RETURNED"
+                            ? "bg-green-100 text-green-700"
+                            : rental.status === "PAID"
+                            ? "bg-blue-100 text-blue-700"
+                            : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
                         {rental.status}
                       </span>
 
@@ -582,6 +689,135 @@ export default function AdminDashboard() {
                         Payment:{" "}
                         {rental.payment?.status || "N/A"}
                       </span>
+
+                      {rental.status === "PLACED" && (
+                        <div className="flex flex-wrap gap-2 pt-2">
+                          <button
+                            onClick={() =>
+                              updateRentalStatus(
+                                rental.id,
+                                "CONFIRMED"
+                              )
+                            }
+                            disabled={updatingId === rental.id}
+                            className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-500 disabled:bg-gray-400"
+                          >
+                            {updatingId === rental.id
+                              ? "Updating..."
+                              : "Confirm"}
+                          </button>
+
+                          <button
+                            onClick={() =>
+                              updateRentalStatus(
+                                rental.id,
+                                "CANCELLED"
+                              )
+                            }
+                            disabled={updatingId === rental.id}
+                            className="rounded-lg bg-red-600 px-3 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:bg-gray-400"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      )}
+
+                      {rental.status === "PAID" && (
+                        <button
+                          onClick={() =>
+                            updateRentalStatus(
+                              rental.id,
+                              "PICKED_UP"
+                            )
+                          }
+                          disabled={updatingId === rental.id}
+                          className="mt-2 rounded-lg bg-purple-600 px-3 py-2 text-sm font-semibold text-white hover:bg-purple-500 disabled:bg-gray-400"
+                        >
+                          {updatingId === rental.id
+                            ? "Updating..."
+                            : "Mark Picked Up"}
+                        </button>
+                      )}
+
+                      {rental.status === "PICKED_UP" && (
+                        <button
+                          onClick={() =>
+                            updateRentalStatus(
+                              rental.id,
+                              "RETURNED"
+                            )
+                          }
+                          disabled={updatingId === rental.id}
+                          className="mt-2 rounded-lg bg-green-600 px-3 py-2 text-sm font-semibold text-white hover:bg-green-500 disabled:bg-gray-400"
+                        >
+                          {updatingId === rental.id
+                            ? "Updating..."
+                            : "Mark Returned"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Customer Reviews */}
+        <div className="mt-8 rounded-xl bg-white p-6 shadow-sm">
+          <div className="mb-5">
+            <h2 className="text-xl font-bold text-gray-900">
+              Customer Reviews
+            </h2>
+
+            <p className="mt-1 text-sm text-gray-500">
+              View reviews submitted by customers
+            </p>
+          </div>
+
+          {reviews.length === 0 ? (
+            <p className="text-gray-500">
+              No reviews found.
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <div
+                  key={review.id}
+                  className="rounded-lg border border-gray-200 p-5"
+                >
+                  <div className="flex flex-col justify-between gap-4 md:flex-row">
+                    <div>
+                      <p className="font-bold text-gray-900">
+                        {review.gearItem?.name || "Gear"}
+                      </p>
+
+                      <p className="mt-1 text-sm text-gray-600">
+                        Customer:{" "}
+                        {review.customer?.name || "N/A"}
+                      </p>
+
+                      <p className="text-sm text-gray-500">
+                        Email:{" "}
+                        {review.customer?.email || "N/A"}
+                      </p>
+
+                      <p className="mt-3 text-lg text-yellow-500">
+                        {"★".repeat(review.rating)}
+                        {"☆".repeat(5 - review.rating)}
+                      </p>
+
+                      {review.comment && (
+                        <p className="mt-3 text-gray-700">
+                          {review.comment}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="text-sm text-gray-500">
+                      {new Date(
+                        review.createdAt
+                      ).toLocaleDateString()}
                     </div>
                   </div>
                 </div>

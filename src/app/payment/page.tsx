@@ -1,11 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import api from "@/lib/api";
 
 export default function PaymentPage() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const rentalOrderId = searchParams.get("rentalOrderId");
 
   const [loading, setLoading] = useState(false);
@@ -47,6 +48,14 @@ export default function PaymentPage() {
     }
   };
 
+  const handleCancel = () => {
+    router.push(
+      rentalOrderId
+        ? `/payment/cancel?status=cancelled&tran_id=${rentalOrderId}`
+        : "/payment/cancel"
+    );
+  };
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-gray-50 px-6">
       <div className="w-full max-w-lg rounded-2xl bg-white p-8 text-center shadow-sm">
@@ -82,6 +91,14 @@ export default function PaymentPage() {
           className="mt-6 w-full rounded-lg bg-blue-600 px-6 py-3 font-bold text-white transition hover:bg-blue-500 disabled:cursor-not-allowed disabled:bg-gray-400"
         >
           {loading ? "Redirecting to payment..." : "Pay with SSLCommerz"}
+        </button>
+
+        <button
+          onClick={handleCancel}
+          disabled={loading}
+          className="mt-3 w-full rounded-lg border border-gray-300 px-6 py-3 font-bold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          Cancel Payment
         </button>
       </div>
     </main>

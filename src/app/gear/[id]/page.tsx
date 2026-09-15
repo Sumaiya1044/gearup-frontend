@@ -1,6 +1,6 @@
 "use client";
-import Image from "next/image";
 
+import Image from "next/image";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -15,6 +15,10 @@ interface Gear {
   image?: string;
   available?: boolean;
   isAvailable?: boolean;
+  provider?: {
+    id: string;
+    name: string;
+  };
 }
 
 const fallbackImages = [
@@ -213,6 +217,22 @@ export default function GearDetailsPage() {
               </div>
             )}
 
+            {gear.provider && (
+              <div className="mt-6 rounded-xl border border-blue-100 bg-blue-50 p-4">
+                <p className="text-sm font-semibold text-blue-600">
+                  Provider Information
+                </p>
+
+                <p className="mt-2 font-bold text-gray-900">
+                  {gear.provider.name}
+                </p>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  Provider ID: {gear.provider.id}
+                </p>
+              </div>
+            )}
+
             <div className="mt-6 border-t border-gray-100 pt-6">
               <p className="text-sm font-medium uppercase tracking-wide text-gray-400">
                 Rental Price
@@ -236,7 +256,16 @@ export default function GearDetailsPage() {
                 </button>
               ) : (
                 <button
-                  onClick={() => { const token = localStorage.getItem("token"); if (!token) { router.push("/login"); return; } router.push(`/booking/${gear.id}`); }}
+                  onClick={() => {
+                    const token = localStorage.getItem("token");
+
+                    if (!token) {
+                      router.push("/login");
+                      return;
+                    }
+
+                    router.push(`/booking/${gear.id}`);
+                  }}
                   className="rounded-xl bg-blue-600 px-7 py-3.5 font-bold text-white transition hover:bg-blue-700"
                 >
                   Book / Rent Now
