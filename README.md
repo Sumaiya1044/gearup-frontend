@@ -1,36 +1,597 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏋️ GearUp – Sports & Outdoor Gear Rental Platform
 
-## Getting Started
+**GearUp** is a modern sports and outdoor gear rental platform that allows customers to discover and rent sports equipment online. Providers can manage their gear and rental orders, while administrators can manage users, gear, rentals, payments, and customer reviews.
 
-First, run the development server:
+The frontend is built with **Next.js, TypeScript, and Tailwind CSS**, with a REST API backend and online payment integration.
+
+---
+
+## 🌐 Live Demo & Project Links
+
+| Resource                         | Link                                           |
+| -------------------------------- | ---------------------------------------------- |
+| 🚀 **Live Frontend – Vercel**    | https://gearup-frontend-two.vercel.app/        |
+| ⚙️ **Live Backend API – Render** | https://gearup-backend-8d3n.onrender.com/      |
+| 💻 **Frontend GitHub**           | https://github.com/Sumaiya1044/gearup-frontend |
+| 🔧 **Backend GitHub**            | https://github.com/Sumaiya1044/GearUp-Backend  |
+
+---
+
+## ✨ Features
+
+### 👤 Customer
+
+* User registration and login
+* Role-based authentication
+* JWT authentication
+* Browse sports and outdoor gear
+* Search and filter gear
+* Filter by price
+* Check gear availability
+* View detailed gear information
+* View provider information
+* Select rental dates
+* Create rental orders
+* Online payment using SSLCommerz
+* Payment success and cancel pages
+* View rental history
+* Track rental status
+* Submit reviews and ratings after returning gear
+* Customer dashboard
+* Secure logout
+
+### 🏪 Provider
+
+* Provider authentication
+* Provider dashboard
+* View total gear
+* View active rentals
+* View pending orders
+* Manage gear inventory
+* Add new gear
+* Edit gear
+* Delete gear
+* Set price per day
+* Set stock quantity
+* Add gear images
+* View rental orders
+* Confirm rental orders
+* Mark orders as picked up
+* Mark orders as returned
+* Provider logout
+
+### 👑 Admin
+
+* Admin authentication
+* Admin dashboard
+* View total users
+* View active users
+* View suspended users
+* View total gear
+* View rental revenue
+* Search users
+* Suspend users
+* Activate users
+* Manage gear availability
+* Manage rental orders
+* Confirm rental orders
+* Mark rentals as picked up
+* Mark rentals as returned
+* Cancel rental orders
+* View customer reviews and ratings
+* Content moderation
+
+---
+
+## 🛠️ Technologies Used
+
+### Frontend
+
+* **Next.js**
+* **React**
+* **TypeScript**
+* **Tailwind CSS**
+* **Axios**
+* **Zustand**
+* **JWT Authentication**
+* **Next.js Middleware**
+
+### Backend
+
+* **Node.js**
+* **Express.js**
+* **TypeScript**
+* **PostgreSQL**
+* **Prisma ORM**
+* **JWT**
+* **bcrypt**
+* **Zod**
+
+### Payment
+
+* **SSLCommerz**
+
+### Deployment
+
+* **Vercel** – Frontend
+* **Render** – Backend
+
+---
+
+## 🔐 Authentication & Authorization
+
+GearUp uses **JWT-based authentication** with role-based authorization.
+
+### Available Roles
+
+```text
+CUSTOMER
+PROVIDER
+ADMIN
+```
+
+### Login Redirects
+
+```text
+CUSTOMER  → /gear
+PROVIDER  → /dashboard/provider
+ADMIN     → /dashboard/admin
+```
+
+Protected dashboard routes are handled using **Next.js Middleware**.
+
+---
+
+## 🛡️ Protected Routes
+
+The following routes require authentication:
+
+```text
+/dashboard/customer
+/dashboard/provider
+/dashboard/admin
+```
+
+If an unauthenticated user tries to access a protected route, they are redirected to:
+
+```text
+/login
+```
+
+---
+
+## 🛒 Rental Flow
+
+```text
+Browse Gear
+     ↓
+View Gear Details
+     ↓
+Rent Now
+     ↓
+Select Start & End Date
+     ↓
+Create Rental Order
+     ↓
+Payment
+     ↓
+Order Confirmation
+     ↓
+Provider Management
+     ↓
+Picked Up
+     ↓
+Returned
+     ↓
+Customer Review
+```
+
+---
+
+## 📦 Rental Status
+
+GearUp supports the following rental statuses:
+
+```text
+PLACED
+CONFIRMED
+PICKED_UP
+RETURNED
+CANCELLED
+```
+
+### Normal Rental Status Flow
+
+```text
+PLACED
+   ↓
+CONFIRMED
+   ↓
+PICKED_UP
+   ↓
+RETURNED
+```
+
+Orders can also be cancelled when applicable.
+
+---
+
+## 💳 Payment Integration
+
+GearUp integrates **SSLCommerz** for online rental payments.
+
+### Payment Flow
+
+```text
+Customer
+   ↓
+Select Gear
+   ↓
+Select Rental Dates
+   ↓
+Create Rental
+   ↓
+Payment Page
+   ↓
+SSLCommerz
+   ↓
+Success / Cancel
+   ↓
+Frontend Result Page
+```
+
+### Payment Routes
+
+```text
+/payment
+/payment/success
+/payment/cancel
+```
+
+---
+
+## ⭐ Review & Rating System
+
+Customers can submit reviews after their rental has been returned.
+
+### Review Flow
+
+```text
+Rental Returned
+      ↓
+Customer Dashboard
+      ↓
+Reviews & Ratings
+      ↓
+Select Gear
+      ↓
+Select Rating
+      ↓
+Write Comment
+      ↓
+Submit Review
+```
+
+Administrators can view submitted customer reviews and ratings from the Admin Dashboard.
+
+---
+
+## 📊 Dashboard Overview
+
+### Customer Dashboard
+
+```text
+Customer Dashboard
+├── Rental Orders
+├── Payment History
+├── Reviews & Ratings
+└── Logout
+```
+
+### Provider Dashboard
+
+```text
+Provider Dashboard
+├── Statistics
+├── Rental Orders
+├── My Gears
+│   ├── Add Gear
+│   ├── Edit Gear
+│   └── Delete Gear
+└── Logout
+```
+
+### Admin Dashboard
+
+```text
+Admin Dashboard
+├── Statistics
+├── User Management
+├── Gear Management
+├── Rental Management
+├── Customer Reviews
+└── Logout
+```
+
+---
+
+## 🔎 Gear Browsing
+
+Customers can:
+
+* Browse available gear
+* Search by gear name
+* Filter by price
+* Check availability
+* View gear details
+* View provider information
+* Start the rental process
+
+The application uses optimized image handling for gear images.
+
+---
+
+## ⚠️ Error & Loading Handling
+
+The frontend provides user-friendly handling for:
+
+* API errors
+* Authentication errors
+* Authorization errors
+* Invalid form submissions
+* Payment failures
+* Empty data
+* Loading states
+* Failed API requests
+
+Users receive clear feedback instead of broken or blank pages.
+
+---
+
+## 📱 Responsive Design
+
+GearUp is designed to work across:
+
+* 📱 Mobile
+* 📱 Tablet
+* 💻 Laptop
+* 🖥️ Desktop
+
+Responsive layouts are implemented using **Tailwind CSS**.
+
+---
+
+## 🖼️ Image Handling
+
+Gear images are supported through image URLs.
+
+The project uses **Next.js image optimization** where applicable.
+
+Remote image configuration is handled through:
+
+```text
+next.config.ts
+```
+
+---
+
+## 📁 Project Structure
+
+```text
+gearup-frontend/
+│
+├── public/
+│
+├── src/
+│   ├── app/
+│   │   ├── dashboard/
+│   │   │   ├── admin/
+│   │   │   ├── customer/
+│   │   │   └── provider/
+│   │   │
+│   │   ├── gear/
+│   │   ├── login/
+│   │   ├── register/
+│   │   ├── payment/
+│   │   └── ...
+│   │
+│   ├── components/
+│   └── lib/
+│
+├── middleware.ts
+├── next.config.ts
+├── package.json
+├── tsconfig.json
+└── README.md
+```
+
+---
+
+## ⚙️ Local Installation
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/Sumaiya1044/gearup-frontend.git
+```
+
+### 2. Enter the project directory
+
+```bash
+cd gearup-frontend
+```
+
+### 3. Install dependencies
+
+```bash
+npm install
+```
+
+### 4. Create environment file
+
+Create a file named:
+
+```text
+.env.local
+```
+
+For local development:
+
+```env
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+```
+
+For production:
+
+```env
+NEXT_PUBLIC_API_URL=https://gearup-backend-8d3n.onrender.com/api
+```
+
+### 5. Start the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Application:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```text
+http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+---
 
-## Learn More
+## 🔗 API Integration
 
-To learn more about Next.js, take a look at the following resources:
+The frontend communicates with the GearUp backend through REST APIs.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Main API modules:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```text
+/api/auth
+/api/gear
+/api/rentals
+/api/payments
+/api/reviews
+/api/admin
+```
 
-## Deploy on Vercel
+The API base URL is configured using:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```env
+NEXT_PUBLIC_API_URL
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## 🌍 Deployment
+
+### Frontend – Vercel
+
+The Next.js frontend is deployed on **Vercel**.
+
+🔗 **Live Website:**
+
+https://gearup-frontend-two.vercel.app/
+
+Every push to the `main` branch automatically triggers a new Vercel deployment.
+
+### Backend – Render
+
+The backend API is deployed on **Render**.
+
+🔗 **Live Backend:**
+
+https://gearup-backend-8d3n.onrender.com/
+
+---
+
+## 🧪 Testing Checklist
+
+### Customer
+
+* [x] Registration
+* [x] Login
+* [x] Browse gear
+* [x] Search and filter
+* [x] View gear details
+* [x] Select rental dates
+* [x] Create rental
+* [x] Online payment
+* [x] View bookings
+* [x] Track rental status
+* [x] Submit review and rating
+
+### Provider
+
+* [x] Provider login
+* [x] Provider dashboard
+* [x] Add gear
+* [x] Edit gear
+* [x] Delete gear
+* [x] View rental orders
+* [x] Confirm orders
+* [x] Mark picked up
+* [x] Mark returned
+
+### Admin
+
+* [x] Admin login
+* [x] Dashboard statistics
+* [x] User management
+* [x] Suspend/activate users
+* [x] Gear management
+* [x] Rental management
+* [x] Review management
+
+---
+
+## 📌 Assignment Requirements Covered
+
+The project implements the major required frontend functionality:
+
+* ✅ Responsive UI
+* ✅ Customer authentication
+* ✅ Provider dashboard
+* ✅ Admin dashboard
+* ✅ Gear browsing
+* ✅ Search and filtering
+* ✅ Gear details
+* ✅ Rental booking
+* ✅ Payment integration
+* ✅ Payment success/cancel flow
+* ✅ Customer dashboard
+* ✅ Provider gear management
+* ✅ Provider order management
+* ✅ Admin user management
+* ✅ Admin gear management
+* ✅ Admin rental management
+* ✅ Review and rating system
+* ✅ Protected routes
+* ✅ Middleware authentication
+* ✅ Loading states
+* ✅ Error handling
+* ✅ API integration
+* ✅ Optimized images
+* ✅ Vercel deployment
+* ✅ Render backend integration
+* ✅ GitHub version control
+
+---
+
+## 👨‍💻 Developer
+
+### Sumaiya Jahan
+
+**B.Sc. in Computer Science & Engineering**
+Leading University, Sylhet, Bangladesh
+
+### GitHub
+
+https://github.com/Sumaiya1044
+
+---
+
+## 📄 License
+
+This project was developed for educational and academic purposes.
