@@ -43,9 +43,13 @@ export default function CustomerReviewsPage() {
 
         const response = await api.get("/rentals");
 
-        const returnedRentals = (response.data?.data || []).filter(
+
+        const returnedRentals = (
+          response.data?.data || []
+        ).filter(
           (rental: Rental) => rental.status === "RETURNED"
         );
+
 
         setRentals(returnedRentals);
       } catch (err: any) {
@@ -126,6 +130,7 @@ export default function CustomerReviewsPage() {
             <h1 className="text-2xl font-extrabold text-gray-900">
               Write a Review
             </h1>
+
             <p className="text-sm text-gray-500">
               Review gear you have returned
             </p>
@@ -133,7 +138,9 @@ export default function CustomerReviewsPage() {
 
           <button
             onClick={() =>
-              router.push("/dashboard/customer/bookings")
+              router.push(
+                "/dashboard/customer/bookings"
+              )
             }
             className="rounded-lg border border-gray-300 px-4 py-2 font-semibold text-gray-700 hover:bg-gray-100"
           >
@@ -145,13 +152,17 @@ export default function CustomerReviewsPage() {
       <section className="mx-auto max-w-4xl px-6 py-8">
         {message && (
           <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
-            <p className="text-green-700">{message}</p>
+            <p className="text-green-700">
+              {message}
+            </p>
           </div>
         )}
 
         {error && (
           <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
-            <p className="text-red-600">{error}</p>
+            <p className="text-red-600">
+              {error}
+            </p>
           </div>
         )}
 
@@ -209,15 +220,31 @@ export default function CustomerReviewsPage() {
                 <select
                   value={rating}
                   onChange={(e) =>
-                    setRating(Number(e.target.value))
+                    setRating(
+                      Number(e.target.value)
+                    )
                   }
                   className="w-full rounded-lg border px-4 py-3 outline-none focus:ring-2 focus:ring-blue-500"
                 >
-                  <option value={5}>★★★★★ - 5</option>
-                  <option value={4}>★★★★☆ - 4</option>
-                  <option value={3}>★★★☆☆ - 3</option>
-                  <option value={2}>★★☆☆☆ - 2</option>
-                  <option value={1}>★☆☆☆☆ - 1</option>
+                  <option value={5}>
+                    ★★★★★ - 5
+                  </option>
+
+                  <option value={4}>
+                    ★★★★☆ - 4
+                  </option>
+
+                  <option value={3}>
+                    ★★★☆☆ - 3
+                  </option>
+
+                  <option value={2}>
+                    ★★☆☆☆ - 2
+                  </option>
+
+                  <option value={1}>
+                    ★☆☆☆☆ - 1
+                  </option>
                 </select>
               </div>
 
